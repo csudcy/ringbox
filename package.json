@@ -1,0 +1,19 @@
+{
+  "name": "ringbox",
+  "version": "0.1.0",
+  "description": "A server which allows you to view multiple Ring timelines at once.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/csudcy/ringbox"
+  },
+  "scripts": {
+    "check:imports": "./scripts/check_imports.sh",
+    "check:style": "./scripts/check_style.sh",
+    "check:types": "./scripts/check_types.sh",
+    "check": "npm run check:imports && npm run check:style && npm run check:types",
+    "deps:install": "./scripts/deps_install.sh",
+    "deps:update": "./scripts/deps_update.sh",
+    "serve": "./scripts/run_serve.sh",
+    "test": "./scripts/run_tests.sh"
+  }
+}

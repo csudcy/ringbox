@@ -1,0 +1,15 @@
+# Documentation about these settings is here: https://github.com/google/yapf#knobs
+
+[style]
+based_on_style=google
+
+# Yapf-Google default: 4 spaces
+# Desired: 2 spaces
+# See https://engdoc.corp.google.com/eng/doc/devguide/py/style/index.md?cl=head#34-indentation
+indent_width=2
+
+# Yapf-Google default: Value is always on the next line, indented to the same level as the key.
+# Desired: Try to keep dict entries on a single line; if they span lines, indent them.
+# See https://engdoc.corp.google.com/eng/doc/devguide/py/style/index.md?cl=head#34-indentation
+allow_split_before_dict_value=False
+indent_dictionary_value=True
