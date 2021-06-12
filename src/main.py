@@ -4,15 +4,15 @@ from fastapi import FastAPI
 from fastapi import Form
 from fastapi import Query
 from fastapi import Request
-from fastapi.responses import Response
 from fastapi.responses import RedirectResponse
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette import status
 
 import exceptions
-import services
 import ringbox_types as rt
+import services
 
 app = FastAPI()
 

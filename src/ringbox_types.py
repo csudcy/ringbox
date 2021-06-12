@@ -1,7 +1,11 @@
-from datetime import date, datetime
+from datetime import date
+from datetime import datetime
 from typing import List
 
 from pydantic import BaseModel
+
+# Not sure why, but pytype thinks BaseModel is a module (not a class).
+# pytype: disable=base-class-error
 
 
 class Device(BaseModel):
@@ -11,7 +15,7 @@ class Device(BaseModel):
 
 class LocationDevices(BaseModel):
   name: str
-  devices: Device = []
+  devices: List[Device] = []
 
 
 class Event(BaseModel):

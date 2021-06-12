@@ -67,7 +67,7 @@ def get_device_lookup() -> Dict[str, RingDoorBell]:
 def get_locations() -> List[rt.LocationDevices]:
   device_lookup = get_device_lookup()
 
-  devices_by_location: Dict[list[rt.LocationDevices]] = {}
+  devices_by_location: Dict[str, rt.LocationDevices] = {}
   for device in device_lookup.values():
     location = device.address.split(',')[0].strip()
     if location not in devices_by_location:
@@ -137,4 +137,4 @@ def get_device_history(device: rt.Device, limit: int) -> rt.DeviceHistoryDevice:
 
 
 def get_play_url(event_id: str) -> str:
-  pass
+  return event_id
