@@ -521,7 +521,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9,<3.10"  # Compatible python versions must be declared here
-content-hash = "fa4e7f490a73e3d37a7060642762721264d2a44333d37fa59323d5a1d4af3e52"
+content-hash = "4918e63fcf35927111a709ae09ba281d85c565d9921d0234f41a9d74db7b86e3"
 
 [metadata.files]
 aiofiles = [
