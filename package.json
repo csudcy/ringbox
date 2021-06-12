@@ -11,6 +11,7 @@
     "check:style": "./scripts/check_style.sh",
     "check:types": "./scripts/check_types.sh",
     "check": "npm run check:imports && npm run check:style && npm run check:types",
+    "deps:add": "./scripts/deps_add.sh",
     "deps:install": "./scripts/deps_install.sh",
     "deps:update": "./scripts/deps_update.sh",
     "serve": "./scripts/run_serve.sh",
