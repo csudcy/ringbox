@@ -9,3 +9,4 @@ __pypackages__/
 # Custom stuff
 .pytype/
 .pytest_cache
+ring_token.cache
