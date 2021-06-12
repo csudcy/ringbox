@@ -10,3 +10,4 @@ __pypackages__/
 .pytype/
 .pytest_cache
 ring_token.cache
+event_files/

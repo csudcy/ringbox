@@ -3,9 +3,11 @@ import functools
 import json
 import operator
 from pathlib import Path
+from pprint import pp
 from typing import Dict, List, Optional
 
 from oauthlib.oauth2 import MissingTokenError
+import requests
 from ring_doorbell import Auth
 from ring_doorbell import Ring
 from ring_doorbell import RingDoorBell
@@ -19,7 +21,7 @@ RING_TOKEN_FILE = Path('ring_token.cache')
 
 VIDEO_TYPES = ('stickup_cams', 'doorbots', 'authorized_doorbots')
 
-EVENT_PLAY_URL = 'https://account.ring.com/api/clients_api/dings/{event_id}/share/play?disable_redirect=true'
+URL_EVENT_PLAY = '/clients_api/dings/{event_id}/share/play?disable_redirect=true'
 
 
 def ring_token_updated(token):
@@ -136,5 +138,13 @@ def get_device_history(device: rt.Device, limit: int) -> rt.DeviceHistoryDevice:
   )
 
 
-def get_play_url(event_id: str) -> str:
-  return event_id
+def get_play_url(event_id: str) -> Optional[str]:
+  # Doesn't exist in the library so call it ourselves
+  url = URL_EVENT_PLAY.format(event_id=event_id)
+  ring = get_ring()
+  response = ring.query(url).json()
+
+  if response['status'] == 'ready':
+    return response['url']
+  else:
+    return None

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from fastapi import FastAPI
 from fastapi import Form
@@ -93,18 +93,6 @@ def devices_history_get(device_ids: List[str] = Query(...),
   return services.get_devices_history(devices, limit)
 
 
-# @app.get('/device/{device_id}/event/{event_id}/')
-# def device_id_history_get(device_id: str, event_id: str) -> Response:
-#   device = services.get_device(device_id)
-#   events = device.history(limit=5)
-
-#   return {
-#       'history': [
-#           {
-#               'created_at': event['created_at'],
-#               'duration': event['duration'],
-#               'id': event['id'],
-#           }
-#           for event in events
-#       ],
-#   }
+@app.get('/event/play/')
+def event_play_get(event_ids: List[str] = Query(...)) -> Dict[str, Optional[str]]:
+  return {event_id: services.get_play_url(event_id) for event_id in event_ids}
