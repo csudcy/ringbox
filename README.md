@@ -22,9 +22,17 @@ poetry config experimental.new-installer false
 npm run deps:install
 ```
 
+
 # Run
 
 ```
 nvm use
 npm run serve
 ```
+
+
+# Todo
+
+* Proper session based login
+* Proper caching
+* Download videos locally to stream?

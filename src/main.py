@@ -14,8 +14,7 @@ import exceptions
 import ringbox_types as rt
 import services
 
-app = FastAPI()
-
+app = FastAPI(title='Rinbox', version='0.0.1')
 app.mount('/static', StaticFiles(directory='static'), name='static')
 
 templates = Jinja2Templates(directory='templates')
@@ -35,7 +34,7 @@ def root_get(request: Request) -> Response:
   # Check we're logged in
   services.get_ring()
 
-  return templates.TemplateResponse('index.tpl', {
+  return templates.TemplateResponse('watch.tpl', {
       'request': request,
   })
 
@@ -74,14 +73,14 @@ def login_post(
 ####################
 
 
-@app.get('/devices/')
+@app.get('/api/devices/')
 def devices_get() -> List[rt.LocationDevices]:
   """Get a list of devices by location.
   """
   return services.get_locations()
 
 
-@app.get('/devices/history/')
+@app.get('/api/devices/history/')
 def devices_history_get(device_ids: List[str] = Query(...),
                         limit: int = 1000) -> rt.DevicesHistory:
   """Get history for multiple devices.
@@ -93,6 +92,6 @@ def devices_history_get(device_ids: List[str] = Query(...),
   return services.get_devices_history(devices, limit)
 
 
-@app.get('/event/play/')
+@app.get('/api/event/play/')
 def event_play_get(event_ids: List[str] = Query(...)) -> Dict[str, Optional[str]]:
   return {event_id: services.get_play_url(event_id) for event_id in event_ids}
