@@ -28,6 +28,7 @@ def ring_token_updated(token):
   RING_TOKEN_FILE.write_text(json.dumps(token))
 
 
+# TODO: Cache this properly (with timeout)
 @functools.lru_cache
 def get_ring(*,
              username: Optional[str] = None,
@@ -50,7 +51,7 @@ def get_ring(*,
 
 
 @functools.lru_cache
-def get_device_lookup() -> Dict[str, RingDoorBell]:
+def get_doorbell_lookup() -> Dict[str, RingDoorBell]:
   ring = get_ring()
 
   # Don't call update_data as that calls update_groups which fails if there are
@@ -58,24 +59,24 @@ def get_device_lookup() -> Dict[str, RingDoorBell]:
   ring.update_devices()
   devices = ring.devices()
 
-  device_lookup = {}
+  doorbell_lookup = {}
   for _type in VIDEO_TYPES:
     for device in devices[_type]:
-      device_lookup[str(device.id)] = device
+      doorbell_lookup[str(device.id)] = device
 
-  return device_lookup
+  return doorbell_lookup
 
 
+@functools.lru_cache
 def get_locations() -> List[rt.LocationDevices]:
-  device_lookup = get_device_lookup()
+  doorbell_lookup = get_doorbell_lookup()
 
   devices_by_location: Dict[str, rt.LocationDevices] = {}
-  for device in device_lookup.values():
-    location = device.address.split(',')[0].strip()
+  for doorbell in doorbell_lookup.values():
+    location = doorbell.address.split(',')[0].strip()
     if location not in devices_by_location:
       devices_by_location[location] = rt.LocationDevices(name=location)
-    devices_by_location[location].devices.append(
-        rt.Device(id=device.id, name=device.name))
+    devices_by_location[location].devices.append(get_doorbell_history(doorbell))
 
   location_list = list(
       sorted(devices_by_location.values(), key=operator.attrgetter('name')))
@@ -85,33 +86,11 @@ def get_locations() -> List[rt.LocationDevices]:
   return location_list
 
 
-def get_device(device_id: str) -> RingDoorBell:
-  device_lookup = get_device_lookup()
-  return device_lookup[device_id]
-
-
-def get_devices(device_ids: List[str]) -> List[RingDoorBell]:
-  device_lookup = get_device_lookup()
-  return [device_lookup[device_id] for device_id in device_ids]
-
-
-def get_devices_history(devices: List[rt.Device],
-                        limit: int) -> rt.DevicesHistory:
-  devices_history = [get_device_history(device, limit) for device in devices]
-  return rt.DevicesHistory(
-      devices=devices_history,
-      date_range=rt.DateRange(
-          start_date=min(device_history.date_range.start_date
-                         for device_history in devices_history),
-          end_date=max(device_history.date_range.end_date
-                       for device_history in devices_history),
-      ),
-  )
-
-
-def get_device_history(device: rt.Device, limit: int) -> rt.DeviceHistoryDevice:
-  device_history = device.history(limit=limit)
-  event_days: Dict[date, rt.DeviceHistoryDeviceDay] = {}
+@functools.lru_cache
+def get_doorbell_history(doorbell: RingDoorBell,
+                         limit: int = 1000) -> rt.Device:
+  device_history = doorbell.history(limit=limit)
+  event_days: rt.DeviceHistoryByDate = {}
   for event_info in device_history:
     event = rt.Event(
         id=event_info['id'],
@@ -121,16 +100,14 @@ def get_device_history(device: rt.Device, limit: int) -> rt.DeviceHistoryDevice:
     )
     event_day = event.created_at.date()
     if event_day not in event_days:
-      event_days[event_day] = rt.DeviceHistoryDeviceDay(
-          day=event_day,
-          events=[],
-      )
-    event_days[event_day].events.append(event)
+      event_days[event_day] = []
+    event_days[event_day].append(event)
 
   dates = event_days.keys()
-  return rt.DeviceHistoryDevice(
-      id=device.id,
-      days=list(event_days.values()),
+  return rt.Device(
+      id=doorbell.id,
+      name=doorbell.name,
+      history=event_days,
       date_range=rt.DateRange(
           start_date=min(dates),
           end_date=max(dates),
@@ -138,6 +115,7 @@ def get_device_history(device: rt.Device, limit: int) -> rt.DeviceHistoryDevice:
   )
 
 
+@functools.lru_cache
 def get_play_url(event_id: str) -> Optional[str]:
   # Doesn't exist in the library so call it ourselves
   url = URL_EVENT_PLAY.format(event_id=event_id)

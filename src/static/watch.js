@@ -16,25 +16,19 @@ TODO:
   "use strict";
 
   const API_DEVICES = "/api/devices/";
-  const API_DEVICES_HISTORY = "/api/devices/history/";
   const API_EVENT_PLAY = "/api/event/play/";
 
   const UI_CONTAINER = document.querySelector("#container_main");
 
   let DEVICES_BY_LOCATION;
-  let DEVICES_HISTORY;
-  let LOCATION_INDEX;
+  let LOCATION_INDEX = 0;
 
   nunjucks.configure("/static/templates", { autoescape: true });
 
   window.onload = function () {
     UI_CONTAINER.innerHTML = "Loading devices...";
     load_devices().then(() => {
-      // Reset to the first location
-      LOCATION_INDEX = 0;
       populate_ui();
-      // UI_CONTAINER.innerHTML = "Loading history for {}...";
-      // load_history().then(populate_ui);
     });
   };
 
@@ -42,10 +36,6 @@ TODO:
     return call_api(API_DEVICES).then((data) => {
       DEVICES_BY_LOCATION = data;
     });
-  }
-
-  function load_history(device) {
-    //
   }
 
   function populate_ui() {

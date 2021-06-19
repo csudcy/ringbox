@@ -80,18 +80,6 @@ def devices_get() -> List[rt.LocationDevices]:
   return services.get_locations()
 
 
-@app.get('/api/devices/history/')
-def devices_history_get(device_ids: List[str] = Query(...),
-                        limit: int = 1000) -> rt.DevicesHistory:
-  """Get history for multiple devices.
-
-  # Note: This is a POST so we can use Pydantic to parse the JSON body while
-  # retaining nice docs - see https://github.com/tiangolo/fastapi/issues/884
-  """
-  devices = services.get_devices(device_ids)
-  return services.get_devices_history(devices, limit)
-
-
 @app.get('/api/event/play/')
 def event_play_get(event_ids: List[str] = Query(...)) -> Dict[str, Optional[str]]:
   return {event_id: services.get_play_url(event_id) for event_id in event_ids}
