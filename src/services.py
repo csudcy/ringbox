@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 import functools
 import json
 import operator
@@ -76,19 +76,28 @@ def get_doorbell_lookup() -> Dict[str, RingDoorBell]:
 def get_locations() -> List[rt.LocationDevices]:
   doorbell_lookup = get_doorbell_lookup()
 
-  devices_by_location: Dict[str, rt.LocationDevices] = {}
+  devices_by_location: Dict[str, List[re.Device]] = {}
   for doorbell in doorbell_lookup.values():
     location = doorbell.address.split(',')[0].strip()
     if location not in devices_by_location:
-      devices_by_location[location] = rt.LocationDevices(name=location)
-    devices_by_location[location].devices.append(get_doorbell_history(doorbell))
+      devices_by_location[location] = []
+    devices_by_location[location].append(get_doorbell_history(doorbell))
 
-  location_list = list(
-      sorted(devices_by_location.values(), key=operator.attrgetter('name')))
-  for location in location_list:
-    location.devices.sort(key=operator.attrgetter('name'))
-
-  return location_list
+  location_list = sorted(devices_by_location.items())
+  return [
+      rt.LocationDevices(
+          name=location,
+          devices=list(sorted(
+              devices,
+              key=operator.attrgetter('name'),
+          )),
+          date_range=rt.DateRange(
+              start_date=min(
+                  [device.date_range.start_date for device in devices]),
+              end_date=max([device.date_range.end_date for device in devices]),
+          ),
+      ) for location, devices in location_list
+  ]
 
 
 @functools.lru_cache

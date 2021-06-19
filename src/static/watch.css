@@ -6,41 +6,64 @@ span {
 
 #container_main {
     bottom: 0;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 33% 5% auto;
     left: 0;
     position: absolute;
     right: 0;
     top: 0;
 }
 
-/* First level container */
+/* Videos */
 
 #video_container {
     display: flex;
     flex-direction: row;
-    height: 300px;
+    grid-row: 1 / 2;
 }
 
-#controls_container {
-    display: flex;
-    height: 50px;
+.video_container {
+    flex-basis: 0;
+    flex-grow: 1;
+    position: relative;
 }
+
+video {
+    height: 100%;
+    position: absolute;
+    width: 100%;
+}
+
+/* Controls */
+
+#controls_container {
+    grid-row: 2 / 3;
+}
+
+/* History */
 
 #history_container {
     display: flex;
     flex-direction: row;
-    flex-grow: 1;
-}
-
-/* Second level container */
-
-.video_container {
-    display: flex;
-    flex-grow: 1;
+    grid-row: 3 / 4;
+    overflow: auto;
 }
 
 .history_container {
-    display: flex;
+    flex-basis: 0;
     flex-grow: 1;
+}
+
+.history_container div {
+    width: 100%;
+}
+
+.history_container button {
+    text-align: left;
+    width: 100%;
+}
+
+.playing {
+    background-color: #cfc;
 }

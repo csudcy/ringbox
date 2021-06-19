@@ -81,5 +81,6 @@ def devices_get() -> List[rt.LocationDevices]:
 
 
 @app.get('/api/event/play/')
-def event_play_get(event_ids: List[str] = Query(...)) -> Dict[str, Optional[str]]:
+def event_play_get(event_ids: List[str] = Query(
+    ...)) -> Dict[str, Optional[str]]:
   return {event_id: services.get_play_url(event_id) for event_id in event_ids}

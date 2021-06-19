@@ -32,5 +32,5 @@ class Device(BaseModel):
 
 class LocationDevices(BaseModel):
   name: str
-  devices: List[Device] = []
-  date_range: Optional[DateRange]
+  devices: List[Device]
+  date_range: DateRange

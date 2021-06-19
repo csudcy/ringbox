@@ -13,7 +13,7 @@ TODO:
 //   <video autoplay="" loop="" controls="" playsinline="" muted="" src=""></video>
 
 (() => {
-  "use strict";
+  ("use strict");
 
   const API_DEVICES = "/api/devices/";
   const API_EVENT_PLAY = "/api/event/play/";
@@ -22,8 +22,16 @@ TODO:
 
   let DEVICES_BY_LOCATION;
   let LOCATION_INDEX = 0;
+  let CHOSEN_DATE;
 
-  nunjucks.configure("/static/templates", { autoescape: true });
+  const NUNJUCKS = nunjucks.configure("/static/templates", {
+    autoescape: true,
+  });
+
+  NUNJUCKS.addFilter("nice_time", (dt_string) => {
+    const dt = new Date(dt_string);
+    return dt.toLocaleTimeString();
+  });
 
   window.onload = function () {
     UI_CONTAINER.innerHTML = "Loading devices...";
@@ -32,21 +40,78 @@ TODO:
     });
   };
 
+  /* API Functions */
+
   function load_devices() {
     return call_api(API_DEVICES).then((data) => {
       DEVICES_BY_LOCATION = data;
     });
   }
 
+  function get_play_url(eventId) {
+    return call_api(`${API_EVENT_PLAY}?event_ids=${eventId}`);
+  }
+
+  /* UI Population */
+
   function populate_ui() {
-    UI_CONTAINER.innerHTML = nunjucks.render("ui.tpl", {
-      location_index: LOCATION_INDEX,
-      chosen_location: DEVICES_BY_LOCATION[LOCATION_INDEX],
+    let chosen_location = DEVICES_BY_LOCATION[LOCATION_INDEX];
+    let dates = [];
+    for (
+      let dt = new Date(chosen_location.date_range.start_date);
+      dt <= new Date(chosen_location.date_range.end_date);
+      dt.setDate(dt.getDate() + 1)
+    ) {
+      dates.unshift(dt.toISOString().slice(0, 10));
+    }
+
+    // Ensure the current date is valid
+    if (dates.indexOf(CHOSEN_DATE) == -1) {
+      CHOSEN_DATE = dates[0];
+    }
+
+    UI_CONTAINER.innerHTML = NUNJUCKS.render("ui.tpl", {
+      chosen_date: CHOSEN_DATE,
+      chosen_location: chosen_location,
+      dates: dates,
       devices_by_location: DEVICES_BY_LOCATION,
+      location_index: LOCATION_INDEX,
+    });
+
+    UI_CONTAINER.querySelectorAll("button").forEach((button) => {
+      button.onclick = handle_play_button;
     });
   }
 
-  /* Utility functions */
+  /* UI Handlers */
+
+  function handle_play_button(event) {
+    const deviceId = event.target.dataset.deviceId;
+    const eventId = event.target.dataset.eventId;
+    const sourceElement = document.querySelector(`#video_${deviceId} source`);
+
+    sourceElement.src = "";
+    get_play_url(eventId).then((urlByEventId) => {
+      sourceElement.src = urlByEventId[eventId];
+      sourceElement.parentElement.load();
+    });
+
+    // Highlight currently playing video
+    document
+      .querySelectorAll(`[data-device-id="${deviceId}"].playing`)
+      .forEach((ele) => {
+        ele.classList.remove("playing");
+      });
+    document
+      .querySelectorAll(
+        `[data-device-id="${deviceId}"][data-event-id="${eventId}"]`
+      )
+      .forEach((ele) => {
+        ele.classList.add("playing");
+      });
+  }
+
+  /* Utility Functions */
 
   function log_debug(title, detail) {
     console.log(`DEBUG: ${title}`, detail);
