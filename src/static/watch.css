@@ -4,7 +4,7 @@ span {
 
 /* Top level container */
 
-.container_main {
+#container_main {
     bottom: 0;
     display: flex;
     flex-direction: column;

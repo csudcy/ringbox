@@ -19,17 +19,23 @@ TODO:
   const API_DEVICES_HISTORY = "/api/devices/history/";
   const API_EVENT_PLAY = "/api/event/play/";
 
-  const UI_VIDEOS = document.querySelector("#video_container");
-  const UI_CONTROLS = document.querySelector("#controls_container");
-  const UI_VIDEOS_HISTORY = document.querySelector("#history_container");
+  const UI_CONTAINER = document.querySelector("#container_main");
 
   let DEVICES_BY_LOCATION;
+  let DEVICES_HISTORY;
+  let LOCATION_INDEX;
 
   nunjucks.configure("/static/templates", { autoescape: true });
 
   window.onload = function () {
-    console.log("Hello!");
-    load_devices().then(populate_ui);
+    UI_CONTAINER.innerHTML = "Loading devices...";
+    load_devices().then(() => {
+      // Reset to the first location
+      LOCATION_INDEX = 0;
+      populate_ui();
+      // UI_CONTAINER.innerHTML = "Loading history for {}...";
+      // load_history().then(populate_ui);
+    });
   };
 
   function load_devices() {
@@ -38,11 +44,16 @@ TODO:
     });
   }
 
+  function load_history(device) {
+    //
+  }
+
   function populate_ui() {
-    let context = { devices_by_location: DEVICES_BY_LOCATION };
-    UI_VIDEOS.innerHTML = nunjucks.render("video.tpl", context);
-    UI_CONTROLS.innerHTML = nunjucks.render("controls.tpl", context);
-    UI_VIDEOS_HISTORY.innerHTML = nunjucks.render("history.tpl", context);
+    UI_CONTAINER.innerHTML = nunjucks.render("ui.tpl", {
+      location_index: LOCATION_INDEX,
+      chosen_location: DEVICES_BY_LOCATION[LOCATION_INDEX],
+      devices_by_location: DEVICES_BY_LOCATION,
+    });
   }
 
   /* Utility functions */
@@ -107,5 +118,4 @@ TODO:
         });
     });
   }
-
 })();

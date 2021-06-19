@@ -1,12 +1,5 @@
-<span class="history_container">
-  HISTORY<br/>
-  {% for location in devices_by_location %}
-    {{ location.name }}<br/>
-    <br/>
-    {% for device in location.devices %}
-      {{ device.name }}<br/>
-      {{ device.id }}<br/>
-      <br/>
-    {% endfor %}
-  {% endfor %}
-</span>
+{% for device in chosen_location.devices %}
+  <span class="history_container" id="history_{{ device.id }}">
+    Loading {{ device.name }}...
+  </span>
+{% endfor %}

@@ -18,15 +18,7 @@
 {% endblock %}
 
 {% block body %}
-  <span class="container_main">
-    <span id="video_container">
-      Loading...
-    </span>
-    <span id="controls_container">
-      Loading...
-    </span>
-    <span id="history_container">
-      Loading...
-    </span>
+  <span id="container_main">
+    Loading...
   </span>
 {% endblock %}
