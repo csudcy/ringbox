@@ -78,8 +78,13 @@ TODO:
       location_index: LOCATION_INDEX,
     });
 
+    // Add handlers
     UI_CONTAINER.querySelectorAll("button").forEach((button) => {
       button.onclick = handle_play_button;
+    });
+
+    UI_CONTAINER.querySelectorAll("#speed_control input").forEach((input) => {
+      input.onclick = handle_speed_control;
     });
   }
 
@@ -89,6 +94,8 @@ TODO:
     const deviceId = event.target.dataset.deviceId;
     const eventId = event.target.dataset.eventId;
     const sourceElement = document.querySelector(`#video_${deviceId} source`);
+
+    log_info(`Playing ${deviceId} / ${eventId}`);
 
     sourceElement.src = "";
     get_play_url(eventId).then((urlByEventId) => {
@@ -109,6 +116,17 @@ TODO:
       .forEach((ele) => {
         ele.classList.add("playing");
       });
+  }
+
+  function handle_speed_control(event) {
+    const playbackRate = event.target.value;
+
+    log_info(`Setting playback rate to ${playbackRate}`);
+
+    document.querySelectorAll("video").forEach((video) => {
+      video.defaultPlaybackRate = playbackRate;
+      video.playbackRate = playbackRate;
+    });
   }
 
   /* Utility Functions */
