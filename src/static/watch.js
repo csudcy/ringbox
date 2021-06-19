@@ -16,7 +16,6 @@ TODO:
   ("use strict");
 
   const API_DEVICES = "/api/devices/";
-  const API_EVENT_PLAY = "/api/event/play/";
 
   const UI_CONTAINER = document.querySelector("#container_main");
 
@@ -71,10 +70,6 @@ TODO:
         });
       });
     });
-  }
-
-  function get_play_url(eventId) {
-    return call_api(`${API_EVENT_PLAY}?event_ids=${eventId}`);
   }
 
   /* UI Population */
@@ -241,6 +236,15 @@ TODO:
   function playEvent(sourceElement, deviceId, eventId) {
     log_info(`Playing ${deviceId} / ${eventId}`);
 
+    // Play/clear the video
+    sourceElement.dataset.currentEventId = eventId;
+    if (eventId) {
+      sourceElement.src = `/play/${eventId}/`;
+    } else {
+      sourceElement.removeAttribute("src");
+    }
+    sourceElement.parentElement.load();
+
     // Remove highlight
     document
       .querySelectorAll(`#history_${deviceId} button.playing`)
@@ -249,22 +253,12 @@ TODO:
       });
 
     if (eventId) {
-      get_play_url(eventId).then((urlByEventId) => {
-        sourceElement.dataset.currentEventId = eventId;
-        sourceElement.src = urlByEventId[eventId];
-        sourceElement.parentElement.load();
-      });
-
       // Highlight currently playing video
       document
         .querySelector(
           `#history_${deviceId} button[data-event-id="${eventId}"]`
         )
         .classList.add("playing");
-    } else {
-      sourceElement.dataset.currentEventId = undefined;
-      sourceElement.removeAttribute("src");
-      sourceElement.parentElement.load();
     }
   }
 

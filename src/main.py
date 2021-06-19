@@ -75,6 +75,12 @@ def login_post(
     return RedirectResponse('/', status_code=status.HTTP_302_FOUND)
 
 
+@app.get('/play/{event_id}/')
+def play_get(event_id: str) -> Response:
+  # Redirect to the real play URL
+  return RedirectResponse(services.get_play_url(event_id),
+                          status_code=status.HTTP_302_FOUND)
+
 ####################
 # API Routes
 ####################
