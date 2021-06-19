@@ -39,6 +39,13 @@ def root_get(request: Request) -> Response:
   })
 
 
+@app.get('/flush/')
+def root_get() -> Response:
+  services.clear_cache()
+
+  return RedirectResponse('/', status_code=status.HTTP_302_FOUND)
+
+
 @app.get('/login/')
 def login_get(request: Request) -> Response:
   return templates.TemplateResponse('login.tpl', {

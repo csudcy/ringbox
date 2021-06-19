@@ -29,6 +29,10 @@ ONE_HOUR_IN_SECONDS = 60 * 60
 ONE_YEAR_IN_SECONDS = 365 * 24 * 60 * 60
 
 
+def clear_cache():
+  CACHE.clear()
+
+
 def ring_token_updated(token):
   RING_TOKEN_FILE.write_text(json.dumps(token))
 
