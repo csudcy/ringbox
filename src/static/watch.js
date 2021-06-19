@@ -198,6 +198,7 @@ TODO:
           const videoTime = sourceElement.parentElement.currentTime;
           const offset = videoTime - expectedTime;
           if (Math.abs(offset) > PLAYBACK_RATE) {
+            // Possibly need to set to the next expected time so it has time to seek...
             console.log(`Fixing time for ${device.id} (offset ${offset})...`);
             sourceElement.parentElement.currentTime = expectedTime;
           }
@@ -262,7 +263,7 @@ TODO:
         .classList.add("playing");
     } else {
       sourceElement.dataset.currentEventId = undefined;
-      sourceElement.src = undefined;
+      sourceElement.removeAttribute("src");
       sourceElement.parentElement.load();
     }
   }
