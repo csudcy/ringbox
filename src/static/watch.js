@@ -21,8 +21,13 @@ TODO:
   const UI_CONTAINER = document.querySelector("#container_main");
 
   let DEVICES_BY_LOCATION;
+  let EVENT_BY_ID;
   let LOCATION_INDEX = 0;
   let CHOSEN_DATE;
+
+  let PLAYBACK_RATE = 1.0;
+  let CURRENT_TIME;
+  let LAST_TICK = new Date();
 
   const NUNJUCKS = nunjucks.configure("/static/templates", {
     autoescape: true,
@@ -38,6 +43,8 @@ TODO:
     load_devices().then(() => {
       populate_ui();
     });
+
+    setInterval(update_time, 500);
   };
 
   /* API Functions */
@@ -45,6 +52,24 @@ TODO:
   function load_devices() {
     return call_api(API_DEVICES).then((data) => {
       DEVICES_BY_LOCATION = data;
+
+      // Add start_date to and end_date to events & make a lookup
+      EVENT_BY_ID = {};
+      DEVICES_BY_LOCATION.forEach((location) => {
+        location.devices.forEach((device) => {
+          Object.values(device.history).forEach((events) => {
+            events.forEach((event) => {
+              const createdAt = new Date(event.created_at);
+              event.start_date = createdAt;
+              event.end_date = new Date(
+                createdAt.getTime() + event.duration * 1000
+              );
+
+              EVENT_BY_ID[event.id] = event;
+            });
+          });
+        });
+      });
     });
   }
 
@@ -55,12 +80,15 @@ TODO:
   /* UI Population */
 
   function populate_ui() {
-    let chosen_location = DEVICES_BY_LOCATION[LOCATION_INDEX];
+    const chosen_location = DEVICES_BY_LOCATION[LOCATION_INDEX];
 
     // Ensure the current date is valid
     if (chosen_location.event_count_by_date[CHOSEN_DATE] === undefined) {
       CHOSEN_DATE = Object.keys(chosen_location.event_count_by_date)[0];
     }
+
+    // Reset to no time until a video is played
+    CURRENT_TIME = undefined;
 
     UI_CONTAINER.innerHTML = NUNJUCKS.render("ui.tpl", {
       chosen_date: CHOSEN_DATE,
@@ -82,42 +110,161 @@ TODO:
   /* UI Handlers */
 
   function handle_play_button(event) {
-    const deviceId = event.target.dataset.deviceId;
     const eventId = event.target.dataset.eventId;
-    const sourceElement = document.querySelector(`#video_${deviceId} source`);
-
-    log_info(`Playing ${deviceId} / ${eventId}`);
-
-    sourceElement.src = "";
-    get_play_url(eventId).then((urlByEventId) => {
-      sourceElement.src = urlByEventId[eventId];
-      sourceElement.parentElement.load();
-    });
-
-    // Highlight currently playing video
-    document
-      .querySelectorAll(`[data-device-id="${deviceId}"].playing`)
-      .forEach((ele) => {
-        ele.classList.remove("playing");
-      });
-    document
-      .querySelectorAll(
-        `[data-device-id="${deviceId}"][data-event-id="${eventId}"]`
-      )
-      .forEach((ele) => {
-        ele.classList.add("playing");
-      });
+    set_time(EVENT_BY_ID[eventId].start_date);
   }
 
   function handle_speed_control(event) {
-    const playbackRate = event.target.value;
+    PLAYBACK_RATE = event.target.value;
 
-    log_info(`Setting playback rate to ${playbackRate}`);
+    log_info(`Setting playback rate to ${PLAYBACK_RATE}`);
 
     document.querySelectorAll("video").forEach((video) => {
-      video.defaultPlaybackRate = playbackRate;
-      video.playbackRate = playbackRate;
+      video.defaultPlaybackRate = PLAYBACK_RATE;
+      video.playbackRate = PLAYBACK_RATE;
     });
+  }
+
+  /* Time Management */
+
+  function set_time(time) {
+    log_info(`Setting time: ${time}`);
+    CURRENT_TIME = new Date(time);
+    render_time();
+  }
+
+  function update_time() {
+    // TODO: Tick time (with speed control)
+    if (CURRENT_TIME !== undefined) {
+      const thisTick = new Date();
+      const tickMilliseconds = thisTick - LAST_TICK;
+      const advanceMilliseconds = tickMilliseconds * PLAYBACK_RATE;
+      CURRENT_TIME.setTime(CURRENT_TIME.getTime() + advanceMilliseconds);
+      LAST_TICK = thisTick;
+    }
+    render_time();
+  }
+
+  function render_time() {
+    /*
+    If no CURRENT_TIME:
+      Clear time display
+      Exit
+
+    Set time display
+
+    For each device:
+      If there's an event playing:
+        If the event is still in time:
+          If the time is off:
+            Set playback time
+          Continue
+
+      If there's an event for the current time:
+        Get play URL
+        Set source
+        Highlight this event
+      Else:
+        If an event is set on the video:
+          Clear the source
+          Clear highlight event
+    */
+
+    // Update time display
+    const timeElement = document.querySelector(`#time_display`);
+    if (CURRENT_TIME === undefined) {
+      timeElement.innerHTML = "??:??:??";
+      return;
+    }
+    timeElement.innerHTML = CURRENT_TIME.toLocaleTimeString();
+
+    // Iterate over devices
+    const chosen_location = DEVICES_BY_LOCATION[LOCATION_INDEX];
+    chosen_location.devices.forEach((device) => {
+      const sourceElement = document.querySelector(
+        `#video_${device.id} source`
+      );
+
+      // Check if the current event is still valid
+      const currentEvent = EVENT_BY_ID[sourceElement.dataset.currentEventId];
+      if (currentEvent) {
+        if (
+          currentEvent.start_date <= CURRENT_TIME &&
+          CURRENT_TIME <= currentEvent.end_date
+        ) {
+          // Check video time is correct
+          const expectedTime =
+            (CURRENT_TIME.getTime() - currentEvent.start_date.getTime()) / 1000;
+          const videoTime = sourceElement.parentElement.currentTime;
+          const offset = videoTime - expectedTime;
+          if (Math.abs(offset) > PLAYBACK_RATE) {
+            console.log(`Fixing time for ${device.id} (offset ${offset})...`);
+            sourceElement.parentElement.currentTime = expectedTime;
+          }
+          return;
+        }
+      }
+
+      // Find event for the current time
+      const nowEvent = findEvent(device, CURRENT_TIME);
+      if (nowEvent) {
+        // Start playback
+        console.log(nowEvent);
+        playEvent(sourceElement, device.id, nowEvent.id);
+      } else {
+        if (currentEvent) {
+          // Clear playback
+          playEvent(sourceElement, device.id);
+        }
+      }
+    });
+  }
+
+  function findEvent(device, time) {
+    // Get history for the current day
+    const dayEvents = device.history[CHOSEN_DATE];
+    if (dayEvents === undefined) {
+      return;
+    }
+
+    // Get the current event
+    const nowEvents = dayEvents.filter((event) => {
+      return event.start_date <= time && time <= event.end_date;
+    });
+
+    if (nowEvents) {
+      return nowEvents[0];
+    }
+  }
+
+  function playEvent(sourceElement, deviceId, eventId) {
+    log_info(`Playing ${deviceId} / ${eventId}`);
+
+    // Remove highlight
+    document
+      .querySelectorAll(`#history_${deviceId} button.playing`)
+      .forEach((ele) => {
+        ele.classList.remove("playing");
+      });
+
+    if (eventId) {
+      get_play_url(eventId).then((urlByEventId) => {
+        sourceElement.dataset.currentEventId = eventId;
+        sourceElement.src = urlByEventId[eventId];
+        sourceElement.parentElement.load();
+      });
+
+      // Highlight currently playing video
+      document
+        .querySelector(
+          `#history_${deviceId} button[data-event-id="${eventId}"]`
+        )
+        .classList.add("playing");
+    } else {
+      sourceElement.dataset.currentEventId = undefined;
+      sourceElement.src = undefined;
+      sourceElement.parentElement.load();
+    }
   }
 
   /* Utility Functions */

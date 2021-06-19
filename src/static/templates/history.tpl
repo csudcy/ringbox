@@ -4,7 +4,7 @@
       {{ device.name }}<br/>
       {% if device.history[chosen_date] %}
         {% for event in device.history[chosen_date] | reverse %}
-            <button data-device-id="{{ device.id }}" data-event-id="{{ event.id }}">
+            <button data-event-id="{{ event.id }}">
               &nbsp; &nbsp; {{ event.created_at | nice_time }} &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ({{ event.duration }}s, {{ event.type }})
             </button><br/>
         {% endfor %}
