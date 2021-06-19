@@ -56,24 +56,15 @@ TODO:
 
   function populate_ui() {
     let chosen_location = DEVICES_BY_LOCATION[LOCATION_INDEX];
-    let dates = [];
-    for (
-      let dt = new Date(chosen_location.date_range.start_date);
-      dt <= new Date(chosen_location.date_range.end_date);
-      dt.setDate(dt.getDate() + 1)
-    ) {
-      dates.unshift(dt.toISOString().slice(0, 10));
-    }
 
     // Ensure the current date is valid
-    if (dates.indexOf(CHOSEN_DATE) == -1) {
-      CHOSEN_DATE = dates[0];
+    if (chosen_location.event_count_by_date[CHOSEN_DATE] === undefined) {
+      CHOSEN_DATE = Object.keys(chosen_location.event_count_by_date)[0];
     }
 
     UI_CONTAINER.innerHTML = NUNJUCKS.render("ui.tpl", {
       chosen_date: CHOSEN_DATE,
       chosen_location: chosen_location,
-      dates: dates,
       devices_by_location: DEVICES_BY_LOCATION,
       location_index: LOCATION_INDEX,
     });

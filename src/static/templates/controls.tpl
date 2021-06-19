@@ -7,8 +7,8 @@
 
 <!-- Date Select -->
 <select>
-  {% for date in dates %}
-    <option value="{{ date }}" {% if date == chosen_date %}selected{% endif %}>{{ date }}</option>
+  {% for date, count in chosen_location.event_count_by_date %}
+    <option value="{{ date }}" {% if date == chosen_date %}selected{% endif %}>{{ date }} ({{ count }} events)</option>
   {% endfor %}
 </select>
 

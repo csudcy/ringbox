@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import date, datetime
 import functools
 import json
@@ -88,20 +89,24 @@ def get_locations() -> List[rt.LocationDevices]:
     devices_by_location[location].append(get_doorbell_history(doorbell))
 
   location_list = sorted(devices_by_location.items())
-  return [
-      rt.LocationDevices(
-          name=location,
-          devices=list(sorted(
-              devices,
-              key=operator.attrgetter('name'),
-          )),
-          date_range=rt.DateRange(
-              start_date=min(
-                  [device.date_range.start_date for device in devices]),
-              end_date=max([device.date_range.end_date for device in devices]),
-          ),
-      ) for location, devices in location_list
-  ]
+  locations_device_list: List[rt.LocationDevices] = []
+  for location, devices in location_list:
+    event_count_by_date = Counter()
+    for device in devices:
+      event_count_by_date.update(
+          {_date: len(events) for _date, events in device.history.items()})
+
+    locations_device_list.append(
+        rt.LocationDevices(
+            name=location,
+            devices=list(sorted(
+                devices,
+                key=operator.attrgetter('name'),
+            )),
+            event_count_by_date=dict(event_count_by_date),
+        ))
+
+  return locations_device_list
 
 
 @functools.lru_cache
@@ -121,15 +126,10 @@ def get_doorbell_history(doorbell: RingDoorBell,
       event_days[event_day] = []
     event_days[event_day].append(event)
 
-  dates = event_days.keys()
   return rt.Device(
       id=doorbell.id,
       name=doorbell.name,
       history=event_days,
-      date_range=rt.DateRange(
-          start_date=min(dates),
-          end_date=max(dates),
-      ),
   )
 
 

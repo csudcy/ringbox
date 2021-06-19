@@ -8,11 +8,6 @@ from pydantic import BaseModel
 # pytype: disable=base-class-error
 
 
-class DateRange(BaseModel):
-  start_date: date
-  end_date: date
-
-
 class Event(BaseModel):
   id: str
   created_at: datetime
@@ -22,15 +17,16 @@ class Event(BaseModel):
 
 DeviceHistoryByDate = Mapping[date, List[Event]]
 
+EventCountByDate = Mapping[date, int]
+
 
 class Device(BaseModel):
   id: str
   name: str
   history: DeviceHistoryByDate
-  date_range: DateRange
 
 
 class LocationDevices(BaseModel):
   name: str
   devices: List[Device]
-  date_range: DateRange
+  event_count_by_date: EventCountByDate
