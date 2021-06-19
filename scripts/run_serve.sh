@@ -7,4 +7,4 @@ cd "${BASH_SOURCE%/*}"
 cd ..
 
 cd src
-../scripts/poetry_run.sh uvicorn main:app --reload
+../scripts/poetry_run.sh uvicorn main:app --reload --reload-dir=../src/

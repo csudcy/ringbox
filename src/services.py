@@ -6,6 +6,7 @@ from pathlib import Path
 from pprint import pp
 from typing import Dict, List, Optional
 
+from diskcache import Cache
 from oauthlib.oauth2 import MissingTokenError
 import requests
 from ring_doorbell import Auth
@@ -22,6 +23,10 @@ RING_TOKEN_FILE = Path('ring_token.cache')
 VIDEO_TYPES = ('stickup_cams', 'doorbots', 'authorized_doorbots')
 
 URL_EVENT_PLAY = '/clients_api/dings/{event_id}/share/play?disable_redirect=true'
+
+CACHE = Cache(directory='../.cache/')
+ONE_HOUR_IN_SECONDS = 60 * 60
+ONE_YEAR_IN_SECONDS = 365 * 24 * 60 * 60
 
 
 def ring_token_updated(token):
@@ -67,7 +72,7 @@ def get_doorbell_lookup() -> Dict[str, RingDoorBell]:
   return doorbell_lookup
 
 
-@functools.lru_cache
+@CACHE.memoize(expire=ONE_YEAR_IN_SECONDS)
 def get_locations() -> List[rt.LocationDevices]:
   doorbell_lookup = get_doorbell_lookup()
 
@@ -115,7 +120,7 @@ def get_doorbell_history(doorbell: RingDoorBell,
   )
 
 
-@functools.lru_cache
+@CACHE.memoize(expire=ONE_HOUR_IN_SECONDS)
 def get_play_url(event_id: str) -> Optional[str]:
   # Doesn't exist in the library so call it ourselves
   url = URL_EVENT_PLAY.format(event_id=event_id)
