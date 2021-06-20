@@ -112,7 +112,7 @@ TODO:
   function handle_speed_control(event) {
     PLAYBACK_RATE = event.target.value;
 
-    log_info(`Setting playback rate to ${PLAYBACK_RATE}`);
+    console.log(`All: Setting playback rate to ${PLAYBACK_RATE}`);
 
     document.querySelectorAll("video").forEach((video) => {
       video.defaultPlaybackRate = PLAYBACK_RATE;
@@ -123,7 +123,7 @@ TODO:
   /* Time Management */
 
   function set_time(time) {
-    log_info(`Setting time: ${time}`);
+    console.log(`All: Setting time: ${time}`);
     CURRENT_TIME = new Date(time);
     render_time();
   }
@@ -234,7 +234,7 @@ TODO:
   }
 
   function playEvent(sourceElement, deviceId, eventId) {
-    log_info(`Playing ${deviceId} / ${eventId}`);
+    console.log(`${deviceId}: Playing ${eventId}`);
 
     // Play/clear the video
     sourceElement.dataset.currentEventId = eventId;
@@ -264,20 +264,8 @@ TODO:
 
   /* Utility Functions */
 
-  function log_debug(title, detail) {
-    console.log(`DEBUG: ${title}`, detail);
-  }
-
-  function log_info(title, detail) {
-    console.log(`INFO: ${title}`, detail);
-  }
-
-  function log_error(title, detail) {
-    console.log(`ERROR: ${title}`, detail);
-  }
-
   function call_api(url, payload) {
-    log_debug(`Fetching ${url}`);
+    console.log(`Fetching ${url}`);
 
     let parameters = null;
     if (payload) {
@@ -303,12 +291,12 @@ TODO:
           if (CONTENT_TYPE && CONTENT_TYPE.indexOf("application/json") == -1) {
             response.text().then((text) => {
               const msg = `${parameters.method} ${url} returned non-JSON response (code ${response.status})!`;
-              log_error(msg, text);
+              console.error(msg, text);
               return reject(msg);
             });
           } else {
             response.json().then((data) => {
-              log_debug(
+              console.log(
                 `${parameters.method} ${url} returned JSON (code ${response.status}).`,
                 data
               );
@@ -319,7 +307,7 @@ TODO:
         .catch((response) => {
           console.error(response);
           const msg = `${parameters.method} ${url} failed!`;
-          log_error(msg, response.text());
+          console.error(msg, response.text());
           return reject(msg);
         });
     });
