@@ -15,6 +15,14 @@ TODO:
 (() => {
   ("use strict");
 
+  const DEVICE_COLOURS = [
+    "red",
+    "green",
+    "blue",
+    "purple",
+    "black"
+  ];
+
   const API_DEVICES = "/api/devices/";
 
   const UI_CONTAINER = document.querySelector("#container_main");
@@ -100,6 +108,30 @@ TODO:
     UI_CONTAINER.querySelectorAll("#speed_control input").forEach((input) => {
       input.onclick = handle_speed_control;
     });
+
+    // Draw the history bar
+    const timeline = document.querySelector("#timeline");
+    const ctx = timeline.getContext("2d");
+    const fullHeight = 10 * chosen_location.devices.length;
+
+    // Fill the background
+    ctx.fillStyle = "#ccc";
+    ctx.fillRect(0, 0, 1440, fullHeight);
+
+    // Draw hour lines
+    ctx.fillStyle = "black";
+    for (let minute=0; minute<1440; minute += 3 * 60) {
+      ctx.fillRect(minute, 0, 2, fullHeight);
+    }
+
+    // Draw the events
+    chosen_location.devices.forEach((device, index) => {
+      ctx.fillStyle = DEVICE_COLOURS[index];
+      device.history[CHOSEN_DATE].forEach((event) => {
+        const startMinute = event.start_date.getHours() * 60 + event.start_date.getMinutes();
+        ctx.fillRect(startMinute, index * 10, 2, 10);
+      });
+    });
   }
 
   /* UI Handlers */
@@ -172,6 +204,9 @@ TODO:
       return;
     }
     timeElement.innerHTML = CURRENT_TIME.toLocaleTimeString();
+
+    const timeSlider = document.querySelector(`#time_slider`);
+    timeSlider.value = 60 * CURRENT_TIME.getHours() + CURRENT_TIME.getMinutes();
 
     // Iterate over devices
     const chosen_location = DEVICES_BY_LOCATION[LOCATION_INDEX];

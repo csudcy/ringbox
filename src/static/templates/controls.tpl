@@ -40,3 +40,5 @@
 </span>
 
 <!-- TODO: Scrubber with device events -->
+<canvas id="timeline" width="1440" height="{{ 10 * chosen_location.devices | length }}"></canvas>
+<input type="range" value="0" min="0" max="1440" id="time_slider"></input>
