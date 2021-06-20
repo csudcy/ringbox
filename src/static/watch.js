@@ -29,7 +29,7 @@ TODO:
 
   let DEVICES_BY_LOCATION;
   let EVENT_BY_ID;
-  let LOCATION_INDEX = 0;
+  let CHOSEN_LOCATION_INDEX = 0;
   let CHOSEN_DATE;
 
   let PLAYBACK_RATE = 1.0;
@@ -83,7 +83,7 @@ TODO:
   /* UI Population */
 
   function populate_ui() {
-    const chosen_location = DEVICES_BY_LOCATION[LOCATION_INDEX];
+    const chosen_location = DEVICES_BY_LOCATION[CHOSEN_LOCATION_INDEX];
 
     // Ensure the current date is valid
     if (chosen_location.event_count_by_date[CHOSEN_DATE] === undefined) {
@@ -97,7 +97,7 @@ TODO:
       chosen_date: CHOSEN_DATE,
       chosen_location: chosen_location,
       devices_by_location: DEVICES_BY_LOCATION,
-      location_index: LOCATION_INDEX,
+      chosen_location_index: CHOSEN_LOCATION_INDEX,
     });
 
     // Add handlers
@@ -108,6 +108,9 @@ TODO:
     UI_CONTAINER.querySelectorAll("#speed_control input").forEach((input) => {
       input.onclick = handle_speed_control;
     });
+
+    UI_CONTAINER.querySelector("#locations").onchange = handle_location_select;
+    UI_CONTAINER.querySelector("#dates").onchange = handle_date_select;
 
     // Draw the history bar
     const timeline = document.querySelector("#timeline");
@@ -126,11 +129,15 @@ TODO:
 
     // Draw the events
     chosen_location.devices.forEach((device, index) => {
-      ctx.fillStyle = DEVICE_COLOURS[index];
-      device.history[CHOSEN_DATE].forEach((event) => {
-        const startMinute = event.start_date.getHours() * 60 + event.start_date.getMinutes();
-        ctx.fillRect(startMinute, index * 10, 2, 10);
-      });
+      const events = device.history[CHOSEN_DATE];
+      if (events) {
+        ctx.fillStyle = DEVICE_COLOURS[index];
+        device.history[CHOSEN_DATE].forEach((event) => {
+          const startMinute =
+            event.start_date.getHours() * 60 + event.start_date.getMinutes();
+          ctx.fillRect(startMinute, index * 10, 2, 10);
+        });
+      }
     });
   }
 
@@ -151,6 +158,18 @@ TODO:
       video.playbackRate = PLAYBACK_RATE;
     });
   }
+
+  function handle_location_select(event) {
+    CHOSEN_LOCATION_INDEX = parseInt(event.target.value);
+    console.log(`All: Setting location to: ${CHOSEN_LOCATION_INDEX}`);
+    populate_ui();
+  };
+
+  function handle_date_select(event) {
+    CHOSEN_DATE = event.target.value;
+    console.log(`All: Setting date to: ${CHOSEN_DATE}`);
+    populate_ui();
+  };
 
   /* Time Management */
 
@@ -209,7 +228,7 @@ TODO:
     timeSlider.value = 60 * CURRENT_TIME.getHours() + CURRENT_TIME.getMinutes();
 
     // Iterate over devices
-    const chosen_location = DEVICES_BY_LOCATION[LOCATION_INDEX];
+    const chosen_location = DEVICES_BY_LOCATION[CHOSEN_LOCATION_INDEX];
     chosen_location.devices.forEach((device) => {
       const sourceElement = document.querySelector(
         `#video_${device.id} source`

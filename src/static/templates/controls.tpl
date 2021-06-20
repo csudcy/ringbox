@@ -1,12 +1,12 @@
 <!-- Location Select -->
-<select>
+<select id="locations">
   {% for location in devices_by_location %}
-    <option value="{{ loop.index0 }}" {% if loop.index0 == location_index %}selected{% endif %}>{{ location.name }} ({{ location.devices | length }} devices)</option>
+    <option value="{{ loop.index0 }}" {% if loop.index0 == chosen_location_index %}selected{% endif %}>{{ location.name }} ({{ location.devices | length }} devices)</option>
   {% endfor %}
 </select>
 
 <!-- Date Select -->
-<select>
+<select id="dates">
   {% for date, count in chosen_location.event_count_by_date %}
     <option value="{{ date }}" {% if date == chosen_date %}selected{% endif %}>{{ date }} ({{ count }} events)</option>
   {% endfor %}
