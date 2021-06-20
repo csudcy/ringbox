@@ -6,5 +6,6 @@
     <!-- TODO: Time display? -->
     <!-- TODO: Scrubber? -->
     <!-- TODO: Download link? -->
+    <!-- TODO: Fullscreen button? -->
   </span>
 {% endfor %}

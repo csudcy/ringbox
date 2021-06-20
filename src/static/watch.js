@@ -110,7 +110,7 @@ TODO:
   }
 
   function handle_speed_control(event) {
-    PLAYBACK_RATE = event.target.value;
+    PLAYBACK_RATE = parseFloat(event.target.value);
 
     console.log(`All: Setting playback rate to ${PLAYBACK_RATE}`);
 
@@ -182,35 +182,61 @@ TODO:
 
       // Check if the current event is still valid
       const currentEvent = EVENT_BY_ID[sourceElement.dataset.currentEventId];
-      if (currentEvent) {
-        if (
-          currentEvent.start_date <= CURRENT_TIME &&
-          CURRENT_TIME <= currentEvent.end_date
-        ) {
-          // Check video time is correct
-          const expectedTime =
-            (CURRENT_TIME.getTime() - currentEvent.start_date.getTime()) / 1000;
-          const videoTime = sourceElement.parentElement.currentTime;
-          const offset = videoTime - expectedTime;
-          if (Math.abs(offset) > PLAYBACK_RATE) {
-            // Possibly need to set to the next expected time so it has time to seek...
-            console.log(`Fixing time for ${device.id} (offset ${offset})...`);
-            sourceElement.parentElement.currentTime = expectedTime;
+      if (
+        currentEvent &&
+        currentEvent.start_date <= CURRENT_TIME &&
+        CURRENT_TIME <= currentEvent.end_date
+      ) {
+        // Check video time is correct
+        const expectedTimeSeconds =
+          (CURRENT_TIME.getTime() - currentEvent.start_date.getTime()) / 1000;
+        const videoTimeSeconds = sourceElement.parentElement.currentTime;
+        const offsetSeconds = videoTimeSeconds - expectedTimeSeconds;
+        if (Math.abs(offsetSeconds) > 2 * PLAYBACK_RATE) {
+          // If we're really far off, just seek to it
+          // Possibly need to set to the next expected time so it has time to seek...
+          console.log(`${device.id}: Setting currentTime`, {
+            offsetSeconds: offsetSeconds,
+          });
+          sourceElement.parentElement.currentTime = expectedTimeSeconds;
+        } else if (Math.abs(offsetSeconds) > PLAYBACK_RATE) {
+          // If we're not too far away, try to catch up/back
+          let playbackRateDelta = PLAYBACK_RATE / 4;
+          if (offsetSeconds > 0) {
+            playbackRateDelta = -playbackRateDelta;
           }
-          return;
+          const currentPlaybackRate = sourceElement.parentElement.playbackRate;
+          let newPlaybackRate = currentPlaybackRate + playbackRateDelta;
+          // Make sure new playback rate is reasonable
+          if (newPlaybackRate <= 0) {
+            newPlaybackRate = 0.1;
+          } else if (newPlaybackRate >= 16) {
+            newPlaybackRate = 16.0;
+          }
+          console.log(`${device.id}: Setting PlaybackRate`, {
+            offsetSeconds: offsetSeconds,
+            currentPlaybackRate: currentPlaybackRate,
+            playbackRateDelta: playbackRateDelta,
+            newPlaybackRate: newPlaybackRate,
+          });
+          sourceElement.parentElement.playbackRate = newPlaybackRate;
+        } else if (sourceElement.parentElement.playbackRate !== PLAYBACK_RATE) {
+          console.log(`${device.id}: Resetting PlaybackRate`, {
+            offsetSeconds: offsetSeconds,
+          });
+          sourceElement.parentElement.playbackRate = PLAYBACK_RATE;
         }
-      }
-
-      // Find event for the current time
-      const nowEvent = findEvent(device, CURRENT_TIME);
-      if (nowEvent) {
-        // Start playback
-        console.log(nowEvent);
-        playEvent(sourceElement, device.id, nowEvent.id);
       } else {
-        if (currentEvent) {
-          // Clear playback
-          playEvent(sourceElement, device.id);
+        // Find event for the current time
+        const nowEvent = findEvent(device, CURRENT_TIME);
+        if (nowEvent) {
+          // Start playback
+          playEvent(sourceElement, device.id, nowEvent.id);
+        } else {
+          if (currentEvent) {
+            // Clear playback
+            playEvent(sourceElement, device.id);
+          }
         }
       }
     });

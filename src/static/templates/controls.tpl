@@ -24,9 +24,8 @@
   {'text': '.5x', 'value': 0.5},
   {'text': '1x', 'value': 1.0},
   {'text': '2x', 'value': 2.0},
-  {'text': '4x', 'value': 4.0},
-  {'text': '8x', 'value': 8.0},
-  {'text': '16x', 'value': 16.0}
+  {'text': '5x', 'value': 5.0},
+  {'text': '10x', 'value': 10.0}
 ] %}
 <span id="speed_control">
   {% for speed in SPEEDS %}
