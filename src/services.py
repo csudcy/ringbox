@@ -5,7 +5,7 @@ import json
 import operator
 from pathlib import Path
 from pprint import pp
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from diskcache import Cache
 from oauthlib.oauth2 import MissingTokenError
@@ -81,7 +81,7 @@ def get_doorbell_lookup() -> Dict[str, RingDoorBell]:
 def get_locations() -> List[rt.LocationDevices]:
   doorbell_lookup = get_doorbell_lookup()
 
-  devices_by_location: Dict[str, List[re.Device]] = {}
+  devices_by_location: Dict[str, List[rt.Device]] = {}
   for doorbell in doorbell_lookup.values():
     location = doorbell.address.split(',')[0].strip()
     if location not in devices_by_location:
@@ -144,3 +144,69 @@ def get_play_url(event_id: str) -> Optional[str]:
     return response['url']
   else:
     return None
+
+
+def get_location_devices() -> List[rt.LocationDevices]:
+  """
+  Check update location devices ()
+  Load location_devices from Redis
+  Return location_devices
+  """
+
+
+def check_update_location_devices() -> None:
+  """
+  If more than 1 hour since checked:
+    Update location devices
+  """
+
+
+def update_location_devices() -> None:
+  """
+  Load location_devices from Redis
+  Check for new devices
+  For new devices, get activity history
+  Save location_devices to Redis
+  Return location_devices
+  """
+
+
+def get_device_day(device: rt.Device, day) -> Optional[rt.DeviceHistoryDay]:
+  """
+  Check update device history (device)
+  Load device-day from Redis
+  Return device-day (or None if no history for that day)
+  """
+
+
+def check_update_device_history(device: rt.Device) -> None:
+  """
+  If more than 1 hour since checked:
+    Update device history (device)
+  """
+
+
+def update_device_history(device: rt.Device) -> None:
+  """
+  Until we reach known history or day limit or end of history:
+    Get first/next device history page
+    Split to days
+    For each day:
+      Create new device-day
+      If existing device-day:
+        device-day = Merge device history (new device-day, existing device-day)
+        If there were duplicates, break after saving
+      Save device-day
+
+  """
+
+
+def merge_device_history(
+    device_day_1: rt.DeviceHistoryDay,
+    device_day_2: rt.DeviceHistoryDay) -> Tuple[rt.DeviceHistoryDay, bool]:
+  """
+  Check both device-days for the same device & day
+  Make a new device-day
+  Combine, order, and unique events
+  Return ...
+  """
