@@ -1,32 +1,31 @@
 from datetime import date
 from datetime import datetime
-from typing import List, Mapping, Optional
+from typing import List, Optional
 
-from pydantic import BaseModel
-
-# Not sure why, but pytype thinks BaseModel is a module (not a class).
-# pytype: disable=base-class-error
+import pydantic
 
 
-class Event(BaseModel):
+class Event(pydantic.BaseModel):
   id: str
   created_at: datetime
   duration: int
   type: str
 
 
-DeviceHistoryByDate = Mapping[date, List[Event]]
+class DeviceHistoryDay(pydantic.BaseModel):
+  events: List[Event]
 
-EventCountByDate = Mapping[date, int]
 
-
-class Device(BaseModel):
+class Device(pydantic.BaseModel):
   id: str
   name: str
-  history: DeviceHistoryByDate
+  earliest_date: Optional[date]
 
 
-class LocationDevices(BaseModel):
+class LocationDevices(pydantic.BaseModel):
   name: str
   devices: List[Device]
-  event_count_by_date: EventCountByDate
+
+
+class LocationDevicesList(pydantic.BaseModel):
+  locations: List[LocationDevices]

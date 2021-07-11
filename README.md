@@ -42,7 +42,7 @@ npm run serve
 
 ```
 Keys:
-* location_devices : JSON string (List[LocationDevices] except devices[].history)
+* location-devices : JSON string (List[LocationDevices] except devices[].history)
 * device-day-{device_id}-{day} : JSON string (List[Event])
 * play-url-{device_id}-{event_id}: String (expiry 1 hour)
 

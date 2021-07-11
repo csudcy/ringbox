@@ -81,16 +81,25 @@ def play_get(event_id: str) -> Response:
   return RedirectResponse(services.get_play_url(event_id),
                           status_code=status.HTTP_302_FOUND)
 
+
 ####################
 # API Routes
 ####################
 
 
 @app.get('/api/devices/')
-def devices_get() -> List[rt.LocationDevices]:
+def devices_get() -> rt.LocationDevicesList:
   """Get a list of devices by location.
   """
-  return services.get_locations()
+  return services.get_location_devices()
+
+
+@app.get('/api/devices/{device_id}/history/{day}/')
+def device_history_get(device_id: str,
+                       day: str) -> Optional[rt.DeviceHistoryDay]:
+  """Get a list of devices by location.
+  """
+  return services.get_device_day(device_id, day)
 
 
 @app.get('/api/event/play/')
