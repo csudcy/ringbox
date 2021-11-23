@@ -24,13 +24,14 @@ TODO:
   ];
 
   const API_DEVICES = "/api/devices/";
+  const API_HISTORY = "/api/devices/{device_id}/history/{day}/";
 
   const UI_CONTAINER = document.querySelector("#container_main");
 
   let DEVICES_BY_LOCATION;
   let EVENT_BY_ID;
   let CHOSEN_LOCATION_INDEX = 0;
-  let CHOSEN_DATE;
+  let CHOSEN_DATE = new Date();
 
   let PLAYBACK_RATE = 1.0;
   let CURRENT_TIME;
@@ -47,11 +48,9 @@ TODO:
 
   window.onload = function () {
     UI_CONTAINER.innerHTML = "Loading devices...";
-    load_devices().then(() => {
-      populate_ui();
-    });
+    load_devices().then(load_history).then(populate_ui);
 
-    setInterval(update_time, 500);
+    // setInterval(update_time, 500);
   };
 
   /* API Functions */
@@ -60,35 +59,54 @@ TODO:
     return call_api(API_DEVICES).then((data) => {
       DEVICES_BY_LOCATION = data;
 
-      // Add start_date to and end_date to events & make a lookup
-      EVENT_BY_ID = {};
-      DEVICES_BY_LOCATION.forEach((location) => {
-        location.devices.forEach((device) => {
-          Object.values(device.history).forEach((events) => {
-            events.forEach((event) => {
-              const createdAt = new Date(event.created_at);
-              event.start_date = createdAt;
-              event.end_date = new Date(
-                createdAt.getTime() + event.duration * 1000
-              );
+      // // Add start_date to and end_date to events & make a lookup
+      // EVENT_BY_ID = {};
+      // DEVICES_BY_LOCATION.locations.forEach((location) => {
+      //   location.devices.forEach((device) => {
+      //     Object.values(device.history).forEach((events) => {
+      //       events.forEach((event) => {
+      //         const createdAt = new Date(event.created_at);
+      //         event.start_date = createdAt;
+      //         event.end_date = new Date(
+      //           createdAt.getTime() + event.duration * 1000
+      //         );
 
-              EVENT_BY_ID[event.id] = event;
-            });
-          });
-        });
+      //         EVENT_BY_ID[event.id] = event;
+      //       });
+      //     });
+      //   });
+      // });
+    });
+  }
+
+  function load_history() {
+    // TODO
+    const chosen_location = DEVICES_BY_LOCATION.locations[CHOSEN_LOCATION_INDEX];
+    const api_calls = chosen_location.devices.slice(0,1).map((device) => {
+      console.log(device);
+      const url = API_HISTORY.replace("{device_id}", device.id).replace(
+        "{day}",
+        get_day(CHOSEN_DATE)
+      );
+      return call_api(url).then((history) => {
+        console.log(history);
       });
     });
+
+    return Promise.all(api_calls);
   }
 
   /* UI Population */
 
   function populate_ui() {
-    const chosen_location = DEVICES_BY_LOCATION[CHOSEN_LOCATION_INDEX];
+    console.log('POPULATE');
+    return;
+    const chosen_location = DEVICES_BY_LOCATION.locations[CHOSEN_LOCATION_INDEX];
 
-    // Ensure the current date is valid
-    if (chosen_location.event_count_by_date[CHOSEN_DATE] === undefined) {
-      CHOSEN_DATE = Object.keys(chosen_location.event_count_by_date)[0];
-    }
+    // // Ensure the current date is valid
+    // if (chosen_location.event_count_by_date[CHOSEN_DATE] === undefined) {
+    //   CHOSEN_DATE = Object.keys(chosen_location.event_count_by_date)[0];
+    // }
 
     // Reset to no time until a video is played
     CURRENT_TIME = undefined;
@@ -228,7 +246,7 @@ TODO:
     timeSlider.value = 60 * CURRENT_TIME.getHours() + CURRENT_TIME.getMinutes();
 
     // Iterate over devices
-    const chosen_location = DEVICES_BY_LOCATION[CHOSEN_LOCATION_INDEX];
+    const chosen_location = DEVICES_BY_LOCATION.locations[CHOSEN_LOCATION_INDEX];
     chosen_location.devices.forEach((device) => {
       const sourceElement = document.querySelector(
         `#video_${device.id} source`
@@ -391,5 +409,9 @@ TODO:
           return reject(msg);
         });
     });
+  }
+
+  function get_day(date) {
+    return date.toISOString().substring(0, 10);
   }
 })();

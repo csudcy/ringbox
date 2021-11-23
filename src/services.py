@@ -7,7 +7,7 @@ import json
 import operator
 from pathlib import Path
 import time
-from typing import Callable, Dict, Generator, List, Optional, Type, TypeVar
+from typing import Any, Callable, Dict, Generator, List, Optional, Type, TypeVar
 
 from diskcache import Cache
 from oauthlib.oauth2 import MissingTokenError
@@ -41,7 +41,7 @@ REDIS_KEY_PLAY_URL = 'play-url-{device_id}-{event_id}'  # String (expiry 1 hour)
 # TODO: Store this in redis too?
 NEXT_CHECK: Dict[str, float] = {}
 NEXT_CHECK_KEY_LOCATION_DEVICES = 'location-devices'
-NEXT_CHECK_KEY_DEVICE_HISTORY = 'device-history-{device.id}'
+NEXT_CHECK_KEY_DEVICE_HISTORY = 'device-history-{device_id}'
 
 
 def clear_cache():
@@ -107,17 +107,25 @@ def get_play_url(event_id: str) -> Optional[str]:
 
 PydanticModel = TypeVar('PydanticModel', bound=pydantic.BaseModel)
 
+T = TypeVar('T')
 
-def rget(key: str, DataType: Type[PydanticModel]) -> Optional[PydanticModel]:
+
+def rget(key: str, DataType: T) -> Optional[T]:
   data = REDIS.get(key)
   if data:
-    return DataType.parse_raw(data)
+    if issubclass(DataType, pydantic.BaseModel):
+      return DataType.parse_raw(data)
+    else:
+      return DataType(data)
   else:
     return None
 
 
-def rset(key: str, obj: pydantic.BaseModel) -> None:
-  data = obj.json()
+def rset(key: str, obj: Any) -> None:
+  if isinstance(obj, pydantic.BaseModel):
+    data = obj.json()
+  else:
+    data = str(obj)
   REDIS.set(key, data)
 
 
@@ -174,7 +182,7 @@ def update_location_devices() -> None:
   location_devices_list = rget(REDIS_KEY_LOCATION_DEVICES,
                                rt.LocationDevicesList)
   if location_devices_list:
-    for location_devices in location_devices_list:
+    for location_devices in location_devices_list.locations:
       for device in location_devices.devices:
         device_lookup[device.id] = device
 
@@ -216,7 +224,7 @@ def get_device_day(device_id: str, day: str) -> Optional[rt.DeviceHistoryDay]:
   Return device-day (or None if no history for that day)
   """
   get_doorbell_lookup
-  update_device_history(device_id)
+  update_device_history(device_id=device_id)
   return rget(REDIS_KEY_LOCATION_DEVICES.format(device_id=device_id, day=day),
               rt.DeviceHistoryDay)
 
@@ -267,7 +275,7 @@ def update_device_history(device_id: str) -> None:
       break
 
   # Save the (possiby updated) earliest date
-  REDIS.hset(REDIS_KEY_EARLIEST_DATE_BY_DEVICE, device_id, earliest_date)
+  REDIS.hset(REDIS_KEY_EARLIEST_DATE_BY_DEVICE, device_id, str(earliest_date))
 
 
 def iter_doorbell_history(
@@ -292,7 +300,7 @@ def iter_doorbell_history(
       )
 
       # Check if we've got enough history yet
-      if event.created_at < oldest_date:
+      if event.created_at.date() < oldest_date:
         return
 
       yield event
